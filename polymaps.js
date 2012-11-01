@@ -1883,7 +1883,7 @@ po.touch = function() {
   function circleInfo(positions) {   // return {x,y,r} of positions
     var i = 0,
         n = positions.length,
-        c = positions[0];
+        c = {x:positions[0].x, y:positions[0].y};
     while (++i < n) c.x += positions[i].x, c.y += positions[i].y;
     c.x /= n, c.y /= n, c.r = 0, i = -1;
     while (++i < n) {
