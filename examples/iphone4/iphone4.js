@@ -14,6 +14,6 @@ map.add(po.image()
     + "/1a1b06b230af4efdbb989ea99e9841af" // http://cloudmade.com/register
     + "/998/256/{Z}/{X}/{Y}.png")
     .hosts(["a.", "b.", "c.", ""]))
-    .zoom(function(z) { return z + dz; }));
+    /*.zoom(function(z) { return z + dz; })*/);
 
 // no compass! pinch-to-zoom ftw
