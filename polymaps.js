@@ -1880,27 +1880,27 @@ po.touch = function() {
   // TODO: restore single finger double tap to zoom in
   // TODO: handle two finger single tap to zoom out
   
-  function circleInfo(coords) {   // return {column,row,radius} of coordinates
+  function circleInfo(positions) {   // return {x,y,r} of positions
     var i = 0,
-        n = coords.length,
-        c = coords[0];
-    while (++i < n) c.column += coords[i].column, c.row += coords[i].row;
-    c.column /= n, c.row /= n, c.radius = 0, i = -1;
+        n = positions.length,
+        c = positions[0];
+    while (++i < n) c.x += positions[i].x, c.y += positions[i].y;
+    c.x /= n, c.y /= n, c.r = 0, i = -1;
     while (++i < n) {
-      var dCol = coords[i].column - c.column,
-          dRow = coords[i].row - c.row,
-          radiusSqd = dCol * dCol + dRow * dRow;
-      if (radiusSqd > c.radius) c.radius = radiusSqd;
+      var dX = positions[i].x - c.x,
+          dY = positions[i].y - c.y,
+          radiusSqd = dX * dX + dY * dY;
+      if (radiusSqd > c.r) c.r = radiusSqd;
     }
-    c.radius = Math.sqrt(c.radius);
+    c.r = Math.sqrt(c.r);
     return c;
   }
   function recalcStartCircle() {
-    var coords = [];
-    for (var id in starts) coords.push(starts[id].coord);
-    startCircle = (coords.length) ? circleInfo(coords) : null;
+    var pts = [];
+    for (var id in starts) pts.push(starts[id]);
+    startCircle = (pts.length) ? circleInfo(pts) : null;
+    if (startCircle) startCircle.location = map.pointLocation(startCircle)
     zoom = map.zoom();
-    console.log("Zoom is", zoom);
   }
   
   function touchstart(e) {
@@ -1910,41 +1910,34 @@ po.touch = function() {
     
     while (++i < n) {
       var f = e.changedTouches[i];
-      starts[f.identifier] = map.pointLocation(map.mouse(f));
-      starts[f.identifier].coord = po.map.locationCoordinate(starts[f.identifier]);
-      starts[f.identifier].time = t;
+      starts[f.identifier] = map.mouse(f);
     }
     recalcStartCircle();
     e.preventDefault();
   }
   
   function touchmove(e) {
-    var coords = [],
+    var pts = [],
         i = -1,
         n = e.touches.length;
     while (++i < n) {
       var f = e.touches[i];
-      if (f.identifier in starts) {
-        var loc = map.pointLocation(map.mouse(f)),
-            coord = po.map.locationCoordinate(loc);
-        coords.push(coord);
-      }
+      if (f.identifier in starts) pts.push(map.mouse(f));
     }
     
-    var circle = circleInfo(coords),
-        scale = circle.radius / startCircle.radius;
-    console.log(scale, JSON.stringify(circle), coords.length);
-    if (scale && isFinite(scale)) map.zoomBy(Math.log(scale) / Math.LN2 + zoom - map.zoom());
+    var circle = circleInfo(pts),
+        scale = circle.r / startCircle.r,
+        dZoom = (n > 1) ? Math.log(scale) / Math.LN2 + zoom - map.zoom() : 0;
+    map.zoomBy(dZoom, circle, startCircle.location);
     
     e.preventDefault();
   }
   
   function touchoff(e) {
-    var f,
-        i = -1,
+    var i = -1,
         n = e.changedTouches.length;
     while (++i < n) {
-      f = e.changedTouches[i];
+      var f = e.changedTouches[i];
       delete starts[f.identifier];
     }
     recalcStartCircle();
