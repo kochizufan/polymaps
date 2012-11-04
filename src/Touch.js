@@ -3,8 +3,7 @@ po.touch = function() {
       map,
       container;
   
-  // TODO: ignore moved touches we didn't see start
-  // TODO: calculate scale/rotate for non-iOS browsers
+  // TODO: calculate rotation for non-iOS browsers
   // TODO: restore single finger double tap to zoom in
   // TODO: handle two finger single tap to zoom out
   
@@ -20,10 +19,18 @@ po.touch = function() {
     while (++i < n) {
       var f = changed[i],
           id = f.identifier;
-      if (type !== 'finish') {
-        touches[id] || (touches[id] = {});
-        touches[id][type] = touches[id]['current'] = map.mouse(f);
-      } else delete touches[id];
+      switch (type) {
+        case 'start':
+          touches[id] = {};
+          touches[id]['start'] = touches[id]['current'] = map.mouse(f);
+          break;
+        case 'current':
+          if (touches[id]) touches[id]['current'] = map.mouse(f);
+          break;
+        case 'finish':
+          delete touches[id];
+          break;
+      }
     }
     dirtyStates[type] = true;
     if (type === 'current') requestDisplayUpdate(type);
