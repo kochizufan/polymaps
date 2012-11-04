@@ -1,22 +1,61 @@
 po.touch = function() {
   var touch = {},
       map,
-      container,
-      rotate = false,
-      last = 0,
-      zoom,
-      angle,
-      startCircle,
-      starts = {}; // touch identifier -> location
-
-  window.addEventListener("touchmove", touchmove, false);
-  window.addEventListener("touchend", touchoff, false);
-  window.addEventListener("touchcancel", touchoff, false);
+      container;
   
   // TODO: ignore moved touches we didn't see start
   // TODO: calculate scale/rotate for non-iOS browsers
   // TODO: restore single finger double tap to zoom in
   // TODO: handle two finger single tap to zoom out
+  
+  var zoom,
+      start,
+      touches = {},
+      dirtyStates = {},
+      displayTimeout = null;
+  
+  function updateTouches(changed, type) {
+    var i = -1,
+        n = changed.length;
+    while (++i < n) {
+      var f = changed[i],
+          id = f.identifier;
+      if (type !== 'finish') {
+        touches[id] || (touches[id] = {});
+        touches[id][type] = touches[id]['current'] = map.mouse(f);
+      } else delete touches[id];
+    }
+    dirtyStates[type] = true;
+    if (type === 'current') requestDisplayUpdate(type);
+  }
+  
+  function updateDisplay() {
+    if (dirtyStates.start || dirtyStates.finish) {
+      zoom = map.zoom();
+      start = touchCircle('start');
+    }
+    dirtyStates = {};
+    displayTimeout = null;
+    
+    var current = touchCircle('current'),
+        dZoom = (current.n > 1) ? Math.log(current.r / start.r) / Math.LN2 + zoom - map.zoom() : 0;
+    if (current.n) map.zoomBy(dZoom, current, start.location);
+  }
+  
+  function requestDisplayUpdate(type) {
+    if (displayTimeout) return;
+    else displayTimeout = setTimeout(updateDisplay, 0);
+  }
+  
+  function touchCircle(type) {
+    var pts = [],
+        circle;
+    for (var id in touches) if (touches[id][type]) pts.push(touches[id][type]);
+    circle = (pts.length) ? circleInfo(pts) : {};
+    circle.n = pts.length;
+    if (circle && type !== 'current') circle.location = map.pointLocation(circle);
+    return circle;
+  }
   
   function circleInfo(positions) {   // return {x,y,r} of positions
     var i = 0,
@@ -33,62 +72,40 @@ po.touch = function() {
     c.r = Math.sqrt(c.r);
     return c;
   }
-  function recalcStartCircle() {
-    var pts = [];
-    for (var id in starts) pts.push(starts[id]);
-    startCircle = (pts.length) ? circleInfo(pts) : null;
-    if (startCircle) startCircle.location = map.pointLocation(startCircle)
-    zoom = map.zoom();
-  }
   
   function touchstart(e) {
-    var i = -1,
-        n = e.changedTouches.length,
-        t = Date.now();
-    
-    while (++i < n) {
-      var f = e.changedTouches[i];
-      starts[f.identifier] = map.mouse(f);
-    }
+    updateTouches(e.changedTouches, 'start');
+    e.preventDefault();
     
     // workaround for http://code.google.com/p/chromium/issues/detail?id=152913
-    // ...as well as http://lists.w3.org/Archives/Public/public-webevents/2012OctDec/0022.html
-    var actuallyActive = {};
-    i = -1, n = e.touches.length;
-    while (++i < n) actuallyActive[e.touches[i].identifier] = true;
-    for (var id in starts) if (!actuallyActive[id]) delete starts[id];
-    
-    recalcStartCircle();
-    e.preventDefault();
-  }
-  
-  function touchmove(e) {
-    var pts = [],
+    var actuallyActive = {},
         i = -1,
         n = e.touches.length;
-    while (++i < n) {
-      var f = e.touches[i];
-      if (f.identifier in starts) pts.push(map.mouse(f));
+    while (++i < n) actuallyActive[e.touches[i].identifier] = true;
+    for (var id in touches) if (!actuallyActive[id]) delete touches[id];
+    
+    var el = e.target;
+    if (el.__polymaps_touch_listeners__) return;
+    el.addEventListener('touchmove', touchmove, false);
+    el.addEventListener('touchend', touchoff, false);
+    el.addEventListener('touchcancel', touchoff, false);
+    el.__polymaps_touch_listeners__ = true;
+    
+    function touchmove (e) {
+      updateTouches(e.changedTouches, 'current');
+      e.preventDefault();
     }
-    
-    var circle = circleInfo(pts),
-        scale = circle.r / startCircle.r,
-        dZoom = (n > 1) ? Math.log(scale) / Math.LN2 + zoom - map.zoom() : 0;
-    map.zoomBy(dZoom, circle, startCircle.location);
-    
-    e.preventDefault();
+    function touchoff (e) {
+      updateTouches(e.changedTouches, 'finish');
+      e.preventDefault();
+      
+      el.removeEventListener('touchmove', touchmove, false);
+      el.removeEventListener('touchend', touchoff, false);
+      el.removeEventListener('touchcancel', touchoff, false);
+      delete el.__polymaps_touch_listeners__;
+    }
   }
   
-  function touchoff(e) {
-    var i = -1,
-        n = e.changedTouches.length;
-    while (++i < n) {
-      var f = e.changedTouches[i];
-      delete starts[f.identifier];
-    }
-    recalcStartCircle();
-    e.preventDefault();
-  }
   
   /* ---- OLD CODE BELOW ---- */
 
