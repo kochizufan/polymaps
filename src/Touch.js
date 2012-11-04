@@ -50,6 +50,14 @@ po.touch = function() {
       var f = e.changedTouches[i];
       starts[f.identifier] = map.mouse(f);
     }
+    
+    // workaround for http://code.google.com/p/chromium/issues/detail?id=152913
+    // ...as well as http://lists.w3.org/Archives/Public/public-webevents/2012OctDec/0022.html
+    var actuallyActive = {};
+    i = -1, n = e.touches.length;
+    while (++i < n) actuallyActive[e.touches[i].identifier] = true;
+    for (var id in starts) if (!actuallyActive[id]) delete starts[id];
+    
     recalcStartCircle();
     e.preventDefault();
   }
