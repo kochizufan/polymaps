@@ -1865,8 +1865,7 @@ po.touch = function() {
       map,
       container;
   
-  // TODO: ignore moved touches we didn't see start
-  // TODO: calculate scale/rotate for non-iOS browsers
+  // TODO: calculate rotation for non-iOS browsers
   // TODO: restore single finger double tap to zoom in
   // TODO: handle two finger single tap to zoom out
   
@@ -1945,7 +1944,7 @@ po.touch = function() {
   
   function touchstart(e) {
     updateTouches(e.changedTouches, 'start');
-    e.preventDefault();
+    //e.preventDefault();
     
     // workaround for http://code.google.com/p/chromium/issues/detail?id=152913
     var actuallyActive = {},
@@ -1967,7 +1966,7 @@ po.touch = function() {
     }
     function touchoff (e) {
       updateTouches(e.changedTouches, 'finish');
-      e.preventDefault();
+      //e.preventDefault();
       
       el.removeEventListener('touchmove', touchmove, false);
       el.removeEventListener('touchend', touchoff, false);
