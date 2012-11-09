@@ -103,7 +103,6 @@ po.touch = function() {
     }
     function touchoff (e) {
       updateTouches(e.changedTouches, 'finish');
-      
       el.removeEventListener('touchmove', touchmove, false);
       el.removeEventListener('touchend', touchoff, false);
       el.removeEventListener('touchcancel', touchoff, false);
