@@ -3,12 +3,12 @@ po.touch = function() {
       map,
       container;
   
-  // TODO: calculate rotation for non-iOS browsers
   // TODO: restore single finger double tap to zoom in
   // TODO: handle two finger single tap to zoom out
   
   var zoom,
       start,
+      rotate,
       touches = {},
       dirtyStates = {},
       displayTimeout = null;
@@ -39,6 +39,7 @@ po.touch = function() {
   function updateDisplay() {
     if (dirtyStates.start || dirtyStates.finish) {
       zoom = map.zoom();
+      angle = map.angle();
       start = touchCircle('start');
     }
     dirtyStates = {};
@@ -47,6 +48,13 @@ po.touch = function() {
     var current = touchCircle('current'),
         dZoom = (current.n > 1) ? Math.log(current.r / start.r) / Math.LN2 + zoom - map.zoom() : 0;
     if (current.n) map.zoomBy(dZoom, current, start.location);
+    if (rotate && 'angle' in current) {
+      var dRotate = current.angle - start.angle,
+          oldCenter = map.center();   // TODO: it'd be great if we could just pass a center to map.angle()
+      map.center(current.location);
+      map.angle(angle + dRotate);
+      map.center(oldCenter);
+    }
   }
   
   function requestDisplayUpdate(type) {
@@ -60,7 +68,7 @@ po.touch = function() {
     for (var id in touches) if (touches[id][type]) pts.push(touches[id][type]);
     circle = (pts.length) ? circleInfo(pts) : {};
     circle.n = pts.length;
-    if (circle && type !== 'current') circle.location = map.pointLocation(circle);
+    if (circle && (rotate || type !== 'current')) circle.location = map.pointLocation(circle);
     return circle;
   }
   
@@ -77,6 +85,11 @@ po.touch = function() {
       if (radiusSqd > c.r) c.r = radiusSqd;
     }
     c.r = Math.sqrt(c.r);
+    if (rotate && n === 2) {
+      var dX = positions[1].x - positions[0].x,
+          dY = positions[1].y - positions[0].y;
+      c.angle = Math.atan2(dY, dX);
+    }
     return c;
   }
   
