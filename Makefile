@@ -8,6 +8,7 @@ JS_FILES = \
 	src/Url.js \
 	src/Dispatch.js \
 	src/Queue.js \
+	src/Browser.js \
 	src/Map.js \
 	src/Layer.js \
 	src/Image.js \
