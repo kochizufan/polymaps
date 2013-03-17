@@ -121,6 +121,8 @@ po.touch = function() {
       document.removeEventListener('touchcancel', touchoff, false);
       delete el.__polymaps_touch_listeners__;
     }
+
+    e.preventDefault();
   }
   
   
