@@ -1621,7 +1621,8 @@ po.drag = function() {
   var drag = {},
       map,
       container,
-      dragging;
+      dragging,
+      type;
 
   var statics = {
     START: po.browser.touch ? ['touchstart', 'mousedown'] : ['mousedown'],
@@ -1640,17 +1641,18 @@ po.drag = function() {
     if (e.touches && e.touches.length > 1) { return; }
 
     var first = (e.touches && e.touches.length === 1 ? e.touches[0] : e);
+    type = e.type;
     dragging = {
       x: first.clientX,
       y: first.clientY
     };
-    map.focusableParent().focus();
+    //map.focusableParent().focus();
     e.preventDefault();
     document.body.style.setProperty("cursor", "move", null);
   }
 
   function mousemove(e) {
-    if (!dragging) return;
+    if (!dragging || e.type !== statics.MOVE[type]) return;
     if (e.touches && e.touches.length > 1) { return; }
 
     var first = (e.touches && e.touches.length === 1 ? e.touches[0] : e);
@@ -1660,7 +1662,7 @@ po.drag = function() {
   }
 
   function mouseup(e) {
-    if (!dragging) return;
+    if (!dragging || e.type !== statics.END[type]) return;
     if (!e.touches) { mousemove(e); }
     dragging = null;
     document.body.style.removeProperty("cursor");
@@ -1689,7 +1691,8 @@ po.drag = function() {
   }
 
   return drag;
-};po.wheel = function() {
+};
+po.wheel = function() {
   var wheel = {},
       timePrev = 0,
       last = 0,
