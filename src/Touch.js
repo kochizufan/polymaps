@@ -105,9 +105,9 @@ po.touch = function() {
     
     var el = e.target;
     if (el.__polymaps_touch_listeners__) return;
-    el.addEventListener('touchmove', touchmove, false);
-    el.addEventListener('touchend', touchoff, false);
-    el.addEventListener('touchcancel', touchoff, false);
+    document.addEventListener('touchmove', touchmove, false);
+    document.addEventListener('touchend', touchoff, false);
+    document.addEventListener('touchcancel', touchoff, false);
     el.__polymaps_touch_listeners__ = true;
     
     function touchmove (e) {
@@ -116,9 +116,9 @@ po.touch = function() {
     }
     function touchoff (e) {
       updateTouches(e.changedTouches, 'finish');
-      el.removeEventListener('touchmove', touchmove, false);
-      el.removeEventListener('touchend', touchoff, false);
-      el.removeEventListener('touchcancel', touchoff, false);
+      document.removeEventListener('touchmove', touchmove, false);
+      document.removeEventListener('touchend', touchoff, false);
+      document.removeEventListener('touchcancel', touchoff, false);
       delete el.__polymaps_touch_listeners__;
     }
   }
