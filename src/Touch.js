@@ -94,6 +94,8 @@ po.touch = function() {
   }
   
   function touchstart(e) {
+    if (!e.touches || e.touches.length !== 2) { return; }
+
     updateTouches(e.changedTouches, 'start');
     
     // workaround for http://code.google.com/p/chromium/issues/detail?id=152913
@@ -111,6 +113,7 @@ po.touch = function() {
     el.__polymaps_touch_listeners__ = true;
     
     function touchmove (e) {
+      if (!e.touches || e.touches.length !== 2) { return; }
       updateTouches(e.changedTouches, 'current');
       e.preventDefault();
     }
